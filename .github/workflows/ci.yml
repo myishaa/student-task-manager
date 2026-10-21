@@ -3,7 +3,23 @@ name: CI
 on:
   push:
     branches: [main, "feature/**"]
+    paths:
+      - "pom.xml"
+      - "src/**"
+      - "Dockerfile"
+      - "compose.yaml"
+      - "k8s/**"
+      - "infra/**"
+      - ".github/workflows/ci.yml"
   pull_request:
+    paths:
+      - "pom.xml"
+      - "src/**"
+      - "Dockerfile"
+      - "compose.yaml"
+      - "k8s/**"
+      - "infra/**"
+      - ".github/workflows/ci.yml"
 
 permissions:
   contents: read
@@ -20,3 +36,18 @@ jobs:
           cache: maven
       - name: Package application
         run: mvn -B -DskipTests package
+
+  terraform-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: Check Terraform formatting
+        working-directory: infra
+        run: terraform fmt -check -recursive
+      - name: Initialize providers
+        working-directory: infra
+        run: terraform init -backend=false -input=false
+      - name: Validate Terraform configuration
+        working-directory: infra
+        run: terraform validate -no-color
