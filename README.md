@@ -10,11 +10,13 @@ Requirements: Docker with Compose.
 docker compose up --build
 ```
 
-The API listens on <http://localhost:8080>. Stop it with `Ctrl+C`; run `docker compose down` to stop and remove the containers. The named MySQL volume keeps local task data between restarts. Remove it with `docker compose down -v` when you want a clean database.
+Open the student task manager at <http://localhost:8080>. The dashboard lets you add, edit, complete, filter, and delete tasks. The REST API is also available at <http://localhost:8080/api/tasks>. Stop the app with `Ctrl+C`; run `docker compose down` to stop and remove the containers. The named MySQL volume keeps local task data between restarts. Remove it with `docker compose down -v` when you want a clean database.
 
 The default database password is only for local development. Set `DB_PASSWORD` and `MYSQL_ROOT_PASSWORD` in your shell or a local `.env` file for local overrides. Never commit real credentials.
 
 ## API
+
+The browser dashboard is served by Spring Boot from `src/main/resources/static/index.html`, so it uses the same origin as the API and needs no separate frontend service.
 
 | Method | Path | Purpose |
 |---|---|---|
