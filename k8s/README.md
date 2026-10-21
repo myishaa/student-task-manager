@@ -4,12 +4,14 @@ These manifests target the single-node K3s cluster described in the project plan
 
 ## Prepare configuration
 
-Build and push the app image to ECR, then export the returned image URI and private RDS endpoint in your terminal:
+Build and push the app image to ECR, then export the image URI and private RDS endpoint in your terminal. Terraform provisions the RDS master password in Secrets Manager; this command reads it into the current shell without printing it:
 
 ```sh
 export APP_IMAGE="<account-id>.dkr.ecr.<region>.amazonaws.com/student-task-manager:<tag>"
-export RDS_ENDPOINT="<rds-endpoint>"
-export DB_PASSWORD="<database-password>"
+export RDS_ENDPOINT="$(terraform -chdir=infra output -raw rds_endpoint)"
+export DB_PASSWORD="$(aws secretsmanager get-secret-value \
+  --secret-id "$(terraform -chdir=infra output -raw rds_master_secret_arn)" \
+  --query SecretString --output text | jq -r .password)"
 ```
 
 Create the namespace and runtime configuration. The password is supplied as a Kubernetes Secret and is not stored in Git:
