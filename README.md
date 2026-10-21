@@ -1,6 +1,6 @@
 # Student Task Manager
 
-A stateless Spring Boot REST API for student tasks, backed by MySQL. This is the first implementation milestone for the CCD cloud-native project; Terraform, Kubernetes, CI/CD, and monitoring are scheduled next.
+A stateless Spring Boot REST API for student tasks, backed by MySQL. This is the first implementation milestone for the CCD cloud-native project. Local Docker Compose is ready; Kubernetes workload manifests are in `k8s/`. AWS provisioning, image publishing, cluster deployment automation, and monitoring remain to be configured.
 
 ## Run locally
 
@@ -44,6 +44,10 @@ Use Java 21, Maven 3.6.3+, and a reachable MySQL database. Configure `DB_URL`, `
 ```sh
 mvn spring-boot:run
 ```
+
+## Kubernetes
+
+The manifests define a two-replica API Deployment, NodePort Service, health probes, resource requests, and a CPU-based Horizontal Pod Autoscaler. See [`k8s/README.md`](k8s/README.md) for the ECR/RDS configuration steps. They require a provisioned cluster, RDS database, and ECR image first.
 
 ## Design notes
 
