@@ -49,6 +49,8 @@ mvn spring-boot:run
 
 The manifests define a two-replica API Deployment, NodePort Service, health probes, resource requests, and a CPU-based Horizontal Pod Autoscaler. See [`k8s/README.md`](k8s/README.md) for the ECR/RDS configuration steps. They require a provisioned cluster, RDS database, and ECR image first.
 
+Terraform for the demo VPC, K3s EC2 host, private RDS database, ECR repository, and access rules is in [`infra/README.md`](infra/README.md). Review current regional pricing and the plan before applying it; AWS resources incur charges.
+
 ## Design notes
 
 - Each API instance is stateless and connects to the shared database.
