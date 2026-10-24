@@ -212,7 +212,8 @@ resource "aws_instance" "app" {
   user_data = <<-USERDATA
     #!/bin/bash
     set -euo pipefail
-    curl -sfL https://get.k3s.io | sh -
+    curl -sfL https://get.k3s.io -o /tmp/install-k3s.sh
+    INSTALL_K3S_EXEC="server --cluster-cidr 10.244.0.0/16" sh /tmp/install-k3s.sh
   USERDATA
 
   root_block_device {
