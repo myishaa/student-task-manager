@@ -13,8 +13,9 @@ Terraform provisions a single EC2 host running K3s, a private RDS MySQL database
 
 - Use the verified profile and Sydney region explicitly for Terraform commands; do not rely on an implicit default profile or region.
 - Review current EC2, RDS, storage, network, and registry pricing for that region.
-- Set `demo_allowed_cidrs` to the demo team's public IPv4 CIDR(s), normally `x.x.x.x/32`. Leaving it empty keeps the API port closed.
+- The default keeps the API NodePort closed to the internet. Leave `demo_allowed_cidrs` empty and use the Systems Manager port-forward below for the demo; only set a team `/32` CIDR if direct public access is needed.
 - The EC2 default is `t3.medium` and the RDS default is `db.t4g.micro`. These defaults are a starting point, not a cost guarantee.
+- EC2 uses standard CPU-credit mode to prevent surplus-credit charges; sustained load can be throttled at the instance baseline. RDS storage is fixed at 20 GB to avoid automatic storage growth. Sustained RDS T4g CPU use can still incur surplus-credit charges.
 - The RDS password is generated and managed by AWS Secrets Manager. Terraform outputs only its secret ARN. Terraform state still contains infrastructure metadata; keep it private and never commit state files.
 
 ## Plan and apply
@@ -30,14 +31,24 @@ AWS_PROFILE=default AWS_REGION=ap-southeast-2 terraform plan \
   -var='demo_allowed_cidrs=["YOUR_PUBLIC_IP/32"]'
 ```
 
-Review the plan and AWS estimate. Applying creates cloud resources and may incur charges; get explicit approval before running `terraform apply`. Do not upgrade the Free Plan or activate paid-only services without approval. To remove an approved demo environment, inspect `terraform plan -destroy` and get approval before running `terraform destroy`. Database deletion skips a final snapshot in this short-lived demo configuration.
+Review the plan and AWS estimate. Applying creates cloud resources and uses AWS Free Plan credits; get explicit approval before running `terraform apply`. Do not upgrade the Free Plan or activate paid-only services without approval. To remove an approved demo environment, inspect `terraform plan -destroy` and get approval before running `terraform destroy`. Database deletion skips a final snapshot in this short-lived demo configuration.
 
 ## After provisioning
 
-1. Use Systems Manager Session Manager or Run Command with the instance ID output; inbound SSH is intentionally not opened.
+1. Use Systems Manager Session Manager with the instance ID output; inbound SSH is intentionally not opened.
 2. Retrieve the RDS username/password from the Secrets Manager ARN output and create the Kubernetes Secret described in [`../k8s/README.md`](../k8s/README.md). Do not paste the secret into source files or terminal transcripts.
-3. Log in to ECR, build and push the app image, then replace the image placeholder in the Kubernetes Deployment.
-4. Deploy the Kubernetes manifests and verify the API at `http://<api_node_public_ip>:30080`.
+3. Log in to ECR, build the image for the EC2 host architecture (`linux/amd64`), and push a versioned image tag. Create a Kubernetes ECR pull secret before deploying the workload.
+4. Deploy the Kubernetes manifests and verify the API through an SSM port-forward. This avoids opening the NodePort to the internet:
+
+   ```sh
+   aws ssm start-session \
+     --target "$(terraform output -raw ec2_instance_id)" \
+     --document-name AWS-StartPortForwardingSession \
+     --parameters '{"portNumber":["30080"],"localPortNumber":["30080"]}' \
+     --profile default --region ap-southeast-2
+   ```
+
+   While the session is running, open <http://localhost:30080>.
 
 ## Security and scope
 

@@ -114,7 +114,6 @@ resource "aws_db_instance" "demo" {
   engine                      = "mysql"
   instance_class              = var.db_instance_class
   allocated_storage           = 20
-  max_allocated_storage       = 100
   storage_type                = "gp3"
   db_name                     = var.db_name
   username                    = var.db_username
@@ -179,6 +178,18 @@ resource "aws_instance" "app" {
   iam_instance_profile        = aws_iam_instance_profile.ec2.name
   associate_public_ip_address = true
   user_data_replace_on_change = true
+
+  # Keep T3 CPU usage within the included baseline; burst above baseline is
+  # throttled instead of accruing surplus-credit charges.
+  credit_specification {
+    cpu_credits = "standard"
+  }
+
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 1
+  }
 
   user_data = <<-USERDATA
     #!/bin/bash

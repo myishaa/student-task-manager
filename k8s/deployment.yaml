@@ -23,6 +23,8 @@ spec:
         app.kubernetes.io/name: task-manager-api
         app.kubernetes.io/part-of: student-task-manager
     spec:
+      imagePullSecrets:
+        - name: ecr-pull
       terminationGracePeriodSeconds: 30
       securityContext:
         runAsNonRoot: true
