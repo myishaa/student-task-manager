@@ -6,6 +6,7 @@ on:
     paths:
       - "pom.xml"
       - "src/**"
+      - "load-tests/**"
       - "Dockerfile"
       - "compose.yaml"
       - "k8s/**"
@@ -15,6 +16,7 @@ on:
     paths:
       - "pom.xml"
       - "src/**"
+      - "load-tests/**"
       - "Dockerfile"
       - "compose.yaml"
       - "k8s/**"
@@ -34,8 +36,10 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
-      - name: Package application
-        run: mvn -B -DskipTests package
+      - name: Test and package application
+        run: mvn -B verify
+      - name: Build container image
+        run: docker build --tag student-task-manager:${{ github.sha }} .
 
   terraform-validate:
     runs-on: ubuntu-latest
