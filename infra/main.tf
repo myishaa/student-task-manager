@@ -2,6 +2,10 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
+data "aws_ssm_parameter" "al2023_ami" {
+  name = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
+}
+
 resource "aws_vpc" "demo" {
   cidr_block           = "10.42.0.0/16"
   enable_dns_support   = true
@@ -185,7 +189,7 @@ resource "aws_iam_instance_profile" "ec2" {
 }
 
 resource "aws_instance" "app" {
-  ami                         = "resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
+  ami                         = data.aws_ssm_parameter.al2023_ami.value
   instance_type               = var.ec2_instance_type
   subnet_id                   = aws_subnet.public.id
   vpc_security_group_ids      = [aws_security_group.app.id]
