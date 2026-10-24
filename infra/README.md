@@ -14,7 +14,7 @@ Terraform provisions a single EC2 host running K3s, a private RDS MySQL database
 - Use the verified profile and Sydney region explicitly for Terraform commands; do not rely on an implicit default profile or region.
 - Review current EC2, RDS, storage, network, and registry pricing for that region.
 - The default keeps the API NodePort closed to the internet. Leave `demo_allowed_cidrs` empty and use the Systems Manager port-forward below for the demo; only set a team `/32` CIDR if direct public access is needed.
-- The EC2 default is `t3.medium` and the RDS default is `db.t4g.micro`. These defaults are a starting point, not a cost guarantee.
+- The EC2 default is `t3.small` (available on the current Free Plan) and the RDS default is `db.t4g.micro`. These defaults are a starting point, not a cost guarantee.
 - EC2 uses standard CPU-credit mode to prevent surplus-credit charges; sustained load can be throttled at the instance baseline. RDS storage is fixed at 20 GB to avoid automatic storage growth. Sustained RDS T4g CPU use can still incur surplus-credit charges.
 - The RDS password is generated and managed by AWS Secrets Manager. Terraform outputs only its secret ARN. Terraform state still contains infrastructure metadata; keep it private and never commit state files.
 
