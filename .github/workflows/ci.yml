@@ -6,6 +6,7 @@ on:
     paths:
       - "pom.xml"
       - "src/**"
+      - "load-tests/**"
       - "Dockerfile"
       - "compose.yaml"
       - "k8s/**"
@@ -15,6 +16,7 @@ on:
     paths:
       - "pom.xml"
       - "src/**"
+      - "load-tests/**"
       - "Dockerfile"
       - "compose.yaml"
       - "k8s/**"

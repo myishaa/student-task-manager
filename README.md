@@ -53,6 +53,22 @@ The manifests define a two-replica API Deployment, NodePort Service, health prob
 
 Terraform for the demo VPC, K3s EC2 host, private RDS database, ECR repository, and access rules is in [`infra/README.md`](infra/README.md). Review current regional pricing and the plan before applying it; AWS resources incur charges.
 
+## Load test
+
+Install [k6](https://grafana.com/docs/k6/latest/set-up/install-k6/) and start the app locally or point the script at a running deployment. The test creates a temporary task, reads it, marks it complete, then deletes it in each iteration:
+
+```sh
+k6 run load-tests/tasks.js
+```
+
+For a remote deployment or a different load level, set `BASE_URL` and `MAX_VUS` (the default is five virtual users):
+
+```sh
+BASE_URL=http://YOUR_DEMO_HOST:30080 MAX_VUS=5 k6 run load-tests/tasks.js
+```
+
+The run ramps up for 30 seconds, holds the configured user count for one minute, and ramps down for 30 seconds. It fails its thresholds if more than 1% of requests fail or p95 latency reaches 500 ms. Run load tests only against an environment you control, start with a low `MAX_VUS`, and do not treat a passing local result as proof that AWS autoscaling works; verify the HPA and available node capacity separately.
+
 ## Design notes
 
 - Each API instance is stateless and connects to the shared database.
