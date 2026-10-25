@@ -1,5 +1,7 @@
 # Auto-Scaling and Self-Healing Cloud-Native Student Task Manager
 
+**Team:** Myisha Siddiqui (240905560), Manan Bhasin (240905492), Rishabh Raj (240905420)
+
 ## Abstract
 
 This project packages a Spring Boot task-management API and browser dashboard with Docker, provisions a small AWS environment with Terraform, and runs the API on Kubernetes (K3s) on an EC2 host. A Horizontal Pod Autoscaler (HPA) adjusts API pod replicas in response to CPU demand. A live load run demonstrated scaling from one to two pods and back to one; deleting an API pod demonstrated Kubernetes replacement after the ECR pull credential was refreshed.

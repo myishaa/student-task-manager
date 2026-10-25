@@ -204,7 +204,7 @@ Keep the controlled liveness failure demonstration in the recorded evidence if t
 - **Prepared:** repository, application, Dockerfile, Terraform, Kubernetes manifests, CI validation, k6 scripts, report, cost estimate, static evidence summary, browser presentation slides, and demo runbook.
 - **Prepared but not activated:** manual AWS image-publish/deploy workflow. It needs a scoped IAM OIDC role, GitHub aws-demo environment, and repository variables; see AWS_CICD_SETUP.md.
 - **Not captured:** backup demo video. Use PRESENTATION_SLIDES.html and PRESENTATION_NOTES.md for the live presentation; if a recording is required, capture the demo from the machine with active AWS access.
-- **Excluded by the current request:** entering registration numbers and showing Grafana live.
+- **Updated:** student registration numbers are now included in the report and presentation. The live Grafana walkthrough remains excluded.
 - **External account actions still needed:** configure the GitHub OIDC role/environment if the team wants to use the prepared release workflow. No AWS release or infrastructure operation was run while preparing these artifacts.
 
 - GitHub repository containing the application, Dockerfile, Terraform, Kubernetes manifests, GitHub Actions workflow, and k6 scripts.
