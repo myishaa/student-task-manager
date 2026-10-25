@@ -12,7 +12,7 @@ variable "project_name" {
 variable "ec2_instance_type" {
   description = "EC2 size for the single-node K3s demo cluster. Review memory capacity and regional pricing before apply."
   type        = string
-  default     = "t3.medium"
+  default     = "t3.small"
 }
 
 variable "db_instance_class" {

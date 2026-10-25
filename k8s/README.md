@@ -106,6 +106,21 @@ Metrics Server must be available for CPU-based autoscaling. On K3s, verify it wi
 
 The NodePort uses port `30080` and is closed to public traffic by default. To open the app locally without changing the security group, start an SSM port-forward session as shown in [`../infra/README.md`](../infra/README.md). If public access is required, allow only the demo team's `/32` CIDR in the EC2 security group. RDS should remain private and accept MySQL traffic only from the EC2 instance security group.
 
+## Prometheus and Grafana monitoring
+
+The manifests in [`monitoring/`](monitoring/) install Prometheus, kube-state-metrics, and Grafana in the `student-task-manager-monitoring` namespace. Apply them from a K3s shell when the repository's `k8s/monitoring` directory is available on the EC2 host:
+
+```sh
+sudo k3s kubectl apply -k /path/to/ccd/k8s/monitoring
+sudo k3s kubectl rollout status deployment/prometheus -n student-task-manager-monitoring
+sudo k3s kubectl rollout status deployment/kube-state-metrics -n student-task-manager-monitoring
+sudo k3s kubectl rollout status deployment/grafana -n student-task-manager-monitoring
+```
+
+Prometheus scrapes the API's `/actuator/prometheus` endpoint and kube-state-metrics every 15 seconds. It retains up to six hours/256 MB in `emptyDir`; data is lost if the pod is recreated. Grafana serves a read-only dashboard at Service port `3000`. All three Services are `ClusterIP` and are not publicly exposed. Follow the Grafana SSM tunnel steps in [`../DEMO_RUNBOOK.md`](../DEMO_RUNBOOK.md) to view it locally.
+
+The Grafana dashboard contains API request rate, 5xx response rate, average request duration, ready/desired API replicas, JVM heap, and process CPU panels. Kube-state-metrics is granted read-only access to Pods, Deployments, ReplicaSets, and HPAs.
+
 To remove the app without deleting the database, run:
 
 ```sh

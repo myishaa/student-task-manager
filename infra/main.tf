@@ -2,6 +2,10 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
+data "aws_ssm_parameter" "al2023_ami" {
+  name = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
+}
+
 resource "aws_vpc" "demo" {
   cidr_block           = "10.42.0.0/16"
   enable_dns_support   = true
@@ -165,13 +169,27 @@ resource "aws_iam_role_policy_attachment" "ecr_read" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
+resource "aws_iam_role_policy" "db_secret_read" {
+  name = "${var.project_name}-db-secret-read"
+  role = aws_iam_role.ec2.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["secretsmanager:GetSecretValue"]
+      Resource = aws_db_instance.demo.master_user_secret[0].secret_arn
+    }]
+  })
+}
+
 resource "aws_iam_instance_profile" "ec2" {
   name = "${var.project_name}-ec2"
   role = aws_iam_role.ec2.name
 }
 
 resource "aws_instance" "app" {
-  ami                         = "resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
+  ami                         = data.aws_ssm_parameter.al2023_ami.value
   instance_type               = var.ec2_instance_type
   subnet_id                   = aws_subnet.public.id
   vpc_security_group_ids      = [aws_security_group.app.id]
@@ -194,7 +212,8 @@ resource "aws_instance" "app" {
   user_data = <<-USERDATA
     #!/bin/bash
     set -euo pipefail
-    curl -sfL https://get.k3s.io | sh -
+    curl -sfL https://get.k3s.io -o /tmp/install-k3s.sh
+    INSTALL_K3S_EXEC="server --cluster-cidr 10.244.0.0/16" sh /tmp/install-k3s.sh
   USERDATA
 
   root_block_device {
@@ -207,6 +226,7 @@ resource "aws_instance" "app" {
   depends_on = [
     aws_iam_role_policy_attachment.ssm,
     aws_iam_role_policy_attachment.ecr_read,
+    aws_iam_role_policy.db_secret_read,
     aws_route_table_association.public
   ]
 

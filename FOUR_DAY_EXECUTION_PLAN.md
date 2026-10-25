@@ -8,6 +8,14 @@ Based on: `CCD_Mini_Project_Synopsis copy.pdf` (all four pages).
 
 **Planning assumption:** All three team members can contribute approximately 7–8 focused hours per day, AWS and GitHub access are available on Day 1, and this is a demonstrable academic prototype. The folder currently contains the synopsis only; implementation starts from scratch. The schedule is tight and depends on parallel ownership and daily integration.
 
+## Recorded implementation status — 25 October 2026
+
+The deployed prototype has evidence for the core pod-level scaling and recovery outcomes. See [`FINAL_REPORT.md`](FINAL_REPORT.md), [`DEMO_RUNBOOK.md`](DEMO_RUNBOOK.md), and [`evidence/DEMO_EVIDENCE.md`](evidence/DEMO_EVIDENCE.md).
+
+- **Verified:** deployed task UI/API with RDS-backed tasks; Docker image in ECR; Terraform-managed AWS/K3s environment; GitHub Actions CI validation; HPA scale-up from one to two pods and scale-down to one under a 30-VU k6 run; Deployment replacement after pod deletion; liveness-probe-triggered container restart.
+- **Scope adjustments:** the planned student-records API became a Student Task Manager UI/API. The cost-constrained deployment uses one EC2 node and an HPA range of one to two replicas, below the original two-to-four target.
+- **Implemented after the original four-day window:** private Prometheus/Grafana monitoring with a six-panel API and Kubernetes dashboard. **Still unimplemented:** automatic image publishing/deployment from GitHub Actions. The single EC2 host does not recover from host failure.
+
 ## 1. Scope and architecture
 
 Build one small student-records service with `POST /students`, `GET /students`, and `GET /students/{id}`. Use Spring Boot, MySQL, and stateless request handling. Omit a frontend, authentication system, extra business features, multi-node infrastructure, and production high availability from this four-day implementation.

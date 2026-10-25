@@ -1,6 +1,6 @@
 # Student Task Manager
 
-A stateless Spring Boot REST API for student tasks, backed by MySQL. This is the first implementation milestone for the CCD cloud-native project. Local Docker Compose is ready; Kubernetes workload manifests are in `k8s/`. AWS provisioning, image publishing, cluster deployment automation, and monitoring remain to be configured.
+A stateless Spring Boot REST API for student tasks, backed by MySQL. The AWS demo runs on a single EC2 host with K3s and a private RDS database. Prometheus and Grafana monitor API and Kubernetes metrics inside the cluster. The repository's GitHub Actions workflow validates Terraform and tests/packages the application; automated AWS image publishing/deployment is not configured yet.
 
 ## Run locally
 
@@ -49,7 +49,7 @@ mvn spring-boot:run
 
 ## Kubernetes
 
-The manifests define a two-replica API Deployment, NodePort Service, health probes, resource requests, and a CPU-based Horizontal Pod Autoscaler. See [`k8s/README.md`](k8s/README.md) for the ECR/RDS configuration steps. They require a provisioned cluster, RDS database, and ECR image first.
+The manifests define a one-replica baseline API Deployment, NodePort Service, health probes, resource requests, and a CPU-based Horizontal Pod Autoscaler configured for one to two replicas. The private Prometheus/Grafana setup and six-panel dashboard are in [`k8s/monitoring/`](k8s/monitoring/); use the SSM port-forward steps in [`DEMO_RUNBOOK.md`](DEMO_RUNBOOK.md) to view Grafana without exposing it publicly. Prometheus keeps six hours of metrics in temporary pod storage. See [`k8s/README.md`](k8s/README.md) for the ECR/RDS configuration steps. The app manifests require a provisioned cluster, RDS database, and ECR image first.
 
 Terraform for the demo VPC, K3s EC2 host, private RDS database, ECR repository, and access rules is in [`infra/README.md`](infra/README.md). Review current regional pricing and the plan before applying it; AWS resources incur charges.
 
@@ -68,6 +68,8 @@ BASE_URL=http://YOUR_DEMO_HOST:30080 MAX_VUS=5 k6 run load-tests/tasks.js
 ```
 
 The run ramps up for 30 seconds, holds the configured user count for one minute, and ramps down for 30 seconds. It fails its thresholds if more than 1% of requests fail or p95 latency reaches 500 ms. Run load tests only against an environment you control, start with a low `MAX_VUS`, and do not treat a passing local result as proof that AWS autoscaling works; verify the HPA and available node capacity separately.
+
+For the AWS presentation, see [`DEMO_RUNBOOK.md`](DEMO_RUNBOOK.md) for the SSM sessions, HPA observation steps, pod recovery demonstration, and a bounded read-only workload in [`load-tests/autoscaling.js`](load-tests/autoscaling.js). Recorded live results and UI screenshots are in [`evidence/DEMO_EVIDENCE.md`](evidence/DEMO_EVIDENCE.md). The implementation report is in [`FINAL_REPORT.md`](FINAL_REPORT.md).
 
 ## Design notes
 
