@@ -12,6 +12,7 @@ on:
       - "k8s/**"
       - "infra/**"
       - ".github/workflows/ci.yml"
+      - ".github/workflows/manual-aws-release.yml"
   pull_request:
     paths:
       - "pom.xml"
@@ -22,6 +23,7 @@ on:
       - "k8s/**"
       - "infra/**"
       - ".github/workflows/ci.yml"
+      - ".github/workflows/manual-aws-release.yml"
 
 permissions:
   contents: read

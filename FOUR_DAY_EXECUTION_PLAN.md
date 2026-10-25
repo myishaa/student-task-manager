@@ -6,7 +6,7 @@ Based on: `CCD_Mini_Project_Synopsis copy.pdf` (all four pages).
 
 **Execution window:** Day 1–Day 4. If starting on 21 October 2026, finish on 24 October 2026. Shift the dates together if starting later.
 
-**Planning assumption:** All three team members can contribute approximately 7–8 focused hours per day, AWS and GitHub access are available on Day 1, and this is a demonstrable academic prototype. The folder currently contains the synopsis only; implementation starts from scratch. The schedule is tight and depends on parallel ownership and daily integration.
+**Original planning assumption:** All three team members could contribute approximately 7–8 focused hours per day, with AWS/GitHub access on Day 1. This described the starting point; the dated status below records the implementation that followed. The schedule is tight and depends on parallel ownership and daily integration.
 
 ## Recorded implementation status — 25 October 2026
 
@@ -14,7 +14,7 @@ The deployed prototype has evidence for the core pod-level scaling and recovery 
 
 - **Verified:** deployed task UI/API with RDS-backed tasks; Docker image in ECR; Terraform-managed AWS/K3s environment; GitHub Actions CI validation; HPA scale-up from one to two pods and scale-down to one under a 30-VU k6 run; Deployment replacement after pod deletion; liveness-probe-triggered container restart.
 - **Scope adjustments:** the planned student-records API became a Student Task Manager UI/API. The cost-constrained deployment uses one EC2 node and an HPA range of one to two replicas, below the original two-to-four target.
-- **Implemented after the original four-day window:** private Prometheus/Grafana monitoring with a six-panel API and Kubernetes dashboard. **Still unimplemented:** automatic image publishing/deployment from GitHub Actions. The single EC2 host does not recover from host failure.
+- **Implemented after the original four-day window:** private Prometheus/Grafana monitoring with a six-panel API and Kubernetes dashboard. A static monitoring graphic was prepared for the presentation; the live Grafana walkthrough is intentionally excluded. A manual GitHub Actions image-publish/deploy workflow and setup instructions are prepared, but AWS OIDC/IAM and GitHub environment configuration remain account-side steps. The single EC2 host does not recover from host failure.
 
 ## 1. Scope and architecture
 
@@ -199,12 +199,18 @@ Keep the controlled liveness failure demonstration in the recorded evidence if t
 - **Recovery causes failed requests:** inspect readiness, Service endpoints, graceful shutdown, remaining replica capacity, and probe timings. Report the measured result until a successful rerun exists.
 - **Time runs short:** cut dashboard polish, extra endpoints, custom UI, and extra charts. Preserve Terraform, CI/CD, HPA, recovery tests, basic monitoring, and accurate documentation.
 
-## 10. Final deliverables
+## 10. Final deliverables and current closeout
+
+- **Prepared:** repository, application, Dockerfile, Terraform, Kubernetes manifests, CI validation, k6 scripts, report, cost estimate, static evidence summary, browser presentation slides, and demo runbook.
+- **Prepared but not activated:** manual AWS image-publish/deploy workflow. It needs a scoped IAM OIDC role, GitHub aws-demo environment, and repository variables; see AWS_CICD_SETUP.md.
+- **Not captured:** backup demo video. Use PRESENTATION_SLIDES.html and PRESENTATION_NOTES.md for the live presentation; if a recording is required, capture the demo from the machine with active AWS access.
+- **Excluded by the current request:** entering registration numbers and showing Grafana live.
+- **External account actions still needed:** configure the GitHub OIDC role/environment if the team wants to use the prepared release workflow. No AWS release or infrastructure operation was run while preparing these artifacts.
 
 - GitHub repository containing the application, Dockerfile, Terraform, Kubernetes manifests, GitHub Actions workflow, and k6 scripts.
 - README with prerequisites, configuration, deployment, verification, rollback, demo, and cleanup steps.
-- Grafana dashboard export, raw test results, screenshots, and backup demo video.
-- Final report, cost comparison with source links, and presentation slides.
-- A tagged working release and a checklist showing which outcomes passed and any remaining limitations.
+- Grafana dashboard configuration, recorded results/screenshots, static monitoring summary, and (if required by submission) a separately recorded demo video.
+- Final report, reproducible cost comparison with source links, and presentation slides.
+- A release tag is a final repository-maintenance item; create it only after the account-side release workflow is configured and the team accepts the submitted commit.
 
 **Completion rule:** Finish implementation by the end of Day 3. Use Day 4 for verification, evidence, documentation, and submission.

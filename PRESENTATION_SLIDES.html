@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Auto-Scaling and Self-Healing Student Task Manager</title>
+<style>
+:root{--bg:#09131f;--panel:#122235;--ink:#f2f7fc;--muted:#b5c4d4;--mint:#72e0c5;--blue:#75aaff;--line:#2b4057}
+*{box-sizing:border-box}body{margin:0;background:#050a10;color:var(--ink);font:20px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.slide{width:min(100vw,177.78vh);height:min(100vh,56.25vw);min-height:640px;margin:0 auto;padding:7vh 7vw;display:none;position:relative;overflow:hidden;background:radial-gradient(circle at 85% 14%,#18304a 0,transparent 34%),linear-gradient(135deg,#09131f,#101e30)}
+.slide.active{display:flex;flex-direction:column;justify-content:center}.slide:after{content:"";position:absolute;left:7vw;right:7vw;bottom:4.5vh;height:1px;background:var(--line)}
+.kicker{color:var(--mint);text-transform:uppercase;letter-spacing:.14em;font-size:.72em;font-weight:750}
+h1{font-size:clamp(2.2rem,5.4vw,5.2rem);line-height:1.02;max-width:1000px;margin:.3em 0 .35em}
+h2{font-size:clamp(2rem,4vw,3.8rem);line-height:1.05;margin:.35em 0 .65em}
+p{max-width:1000px;color:var(--muted);font-size:1.08em}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:14px}
+.card{background:linear-gradient(135deg,#14263b,#102033);border:1px solid var(--line);border-radius:20px;padding:22px 25px}
+.card h3{margin:0 0 8px;color:var(--mint);font-size:1.05em}.card p{margin:0;font-size:.92em}
+.flow{display:flex;align-items:stretch;gap:12px;margin-top:22px}.flow span{flex:1;background:#14263b;border:1px solid var(--line);padding:20px 12px;text-align:center;border-radius:16px;font-weight:700}.arrow{color:var(--mint);align-self:center;font-size:1.5em}
+.statrow{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin:22px 0}.stat{padding:18px;background:#14263b;border:1px solid var(--line);border-radius:16px}.stat b{display:block;color:var(--mint);font-size:1.55em}.stat small{color:var(--muted)}
+img.monitor{width:min(100%,970px);max-height:44vh;object-fit:contain;border-radius:12px;align-self:center}
+ol,ul{color:var(--muted);padding-left:1.2em}li{margin:.35em 0}strong{color:var(--ink)}
+.footer{position:absolute;bottom:2.3vh;left:7vw;color:#8297ad;font-size:.7em}.controls{position:fixed;right:18px;bottom:18px;z-index:5;display:flex;gap:8px}.controls button{border:1px solid #46617d;background:#14263b;color:white;border-radius:9px;padding:10px 15px;font:inherit;cursor:pointer}
+.counter{position:absolute;right:7vw;bottom:2.3vh;color:#8297ad;font-size:.7em}
+@media print{body{background:#fff}.slide,.slide.active{display:flex!important;width:100vw;height:56.25vw;min-height:0;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}.controls{display:none}}
+@media(max-width:720px){.slide{min-height:100vh;height:auto;padding:8vh 7vw}.grid{grid-template-columns:1fr}.flow{flex-direction:column}.arrow{transform:rotate(90deg)}.statrow{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<section class="slide active">
+  <span class="kicker">CCD Lab · Cloud Computing and DevOps</span>
+  <h1>Auto-Scaling and Self-Healing Cloud-Native Application</h1>
+  <p>Student Task Manager · Kubernetes, Docker, Terraform and AWS</p>
+  <div class="grid">
+    <article class="card"><h3>What we built</h3><p>A browser task manager backed by a Spring Boot API and MySQL.</p></article>
+    <article class="card"><h3>What we measured</h3><p>Pod scaling and recovery on a single-node K3s cluster in AWS Sydney.</p></article>
+  </div>
+  <span class="footer">Use left/right arrow keys to navigate · 1 / 7</span><span class="counter">25 October 2026</span>
+</section>
+<section class="slide">
+  <span class="kicker">01 · Motivation</span><h2>Why this project?</h2>
+  <div class="grid">
+    <article class="card"><h3>Operational problem</h3><p>Hand-configured servers are difficult to reproduce. A failed application process needs to recover without someone manually recreating its pod.</p></article>
+    <article class="card"><h3>Project goal</h3><p>Package the service, describe infrastructure as code, and use Kubernetes to adjust API replicas and replace unhealthy pods.</p></article>
+    <article class="card"><h3>Working application</h3><p>Create, list, edit, complete and delete tasks in the browser. The Spring Boot API persists them in private RDS MySQL.</p></article>
+    <article class="card"><h3>Scope boundary</h3><p>Autoscaling is at the pod layer on one EC2 host. This demo does not claim host-level high availability.</p></article>
+  </div><span class="footer">2 / 7</span>
+</section>
+<section class="slide">
+  <span class="kicker">02 · Architecture</span><h2>From browser to database</h2>
+  <div class="flow"><span>Browser UI</span><b class="arrow">→</b><span>NodePort Service</span><b class="arrow">→</b><span>Spring Boot pods<br>K3s on EC2</span><b class="arrow">→</b><span>Private RDS<br>MySQL</span></div>
+  <div class="grid">
+    <article class="card"><h3>Build and image</h3><p>Docker packages the Java 21 service; Amazon ECR stores the image used by K3s.</p></article>
+    <article class="card"><h3>Infrastructure</h3><p>Terraform defines the VPC, EC2 host, private database, ECR and scoped access.</p></article>
+    <article class="card"><h3>Scaling and recovery</h3><p>HPA targets 60% pod CPU; Deployment and health probes recreate or restart failed pods.</p></article>
+    <article class="card"><h3>Access and metrics</h3><p>SSM gives a private terminal and port-forward. Prometheus records API and cluster metrics.</p></article>
+  </div><span class="footer">3 / 7</span>
+</section>
+<section class="slide">
+  <span class="kicker">03 · Demonstration</span><h2>What happens during the test?</h2>
+  <ol>
+    <li>Create a task in the browser, mark it complete, then refresh to show persistence.</li>
+    <li>Inspect the Deployment, pods, Service and HPA from the SSM terminal.</li>
+    <li>Run the bounded read-only k6 workload and watch CPU and replica count.</li>
+    <li>Delete an API pod after the load test; Kubernetes creates a replacement.</li>
+    <li>Explain the separately recorded liveness restart and saved monitoring evidence.</li>
+  </ol>
+  <p>No live Grafana walkthrough is included. The next slide shows a static summary reconstructed from the recorded Prometheus queries; it is not a dashboard screenshot.</p><span class="footer">4 / 7</span>
+</section>
+<section class="slide">
+  <span class="kicker">04 · Recorded monitoring snapshot</span><h2>Metrics from the deployed demo</h2>
+  <img class="monitor" src="evidence/monitoring-summary.svg" alt="Static summary of recorded Prometheus metrics">
+  <p>The six-panel Grafana dashboard was deployed and its datasource/panels were verified. A PNG export was unavailable, so this summary uses the recorded query values.</p><span class="footer">5 / 7</span>
+</section>
+<section class="slide">
+  <span class="kicker">05 · Measured results</span><h2>Observed behavior</h2>
+  <div class="statrow">
+    <div class="stat"><b>5,699</b><small>GET requests</small></div>
+    <div class="stat"><b>0%</b><small>failed requests</small></div>
+    <div class="stat"><b>403.98 ms</b><small>p95 latency</small></div>
+    <div class="stat"><b>1 → 2 → 1</b><small>API replicas</small></div>
+  </div>
+  <div class="grid">
+    <article class="card"><h3>Self-healing</h3><p>Deployment replaced a deleted API pod. A controlled liveness failure restarted the container and readiness returned UP.</p></article>
+    <article class="card"><h3>Scale behavior</h3><p>CPU rose above the 60% target under load; the HPA added a pod and later returned to one replica after load stopped.</p></article>
+  </div><span class="footer">6 / 7 · Results apply to the tested read-only workload and one EC2 host.</span>
+</section>
+<section class="slide">
+  <span class="kicker">06 · Cost and conclusion</span><h2>What the project proves—and what it does not</h2>
+  <div class="grid">
+    <article class="card"><h3>Estimated provisioned cost</h3><p>About $47.31/month on the modeled Sydney on-demand list-price assumptions, before credits, taxes, and variable usage. This is not an actual AWS bill.</p></article>
+    <article class="card"><h3>Pod scale is not host scale</h3><p>Changing pod count on the same EC2 and RDS resources changes their provisioned hourly charges by approximately $0.</p></article>
+    <article class="card"><h3>Demonstrated</h3><p>Container delivery, Terraform-defined AWS resources, HPA scale-up/down, and pod/process recovery.</p></article>
+    <article class="card"><h3>Future work</h3><p>Multi-node host recovery, automated image delivery after IAM/OIDC setup, persistent monitoring history, and authentication.</p></article>
+  </div>
+  <p>Conclusion: a working cloud-native application can recover and change pod capacity automatically, while infrastructure availability and cost depend on a broader design.</p><span class="footer">7 / 7 · See COST_ANALYSIS.md, FINAL_REPORT.md and evidence/DEMO_EVIDENCE.md.</span>
+</section>
+<div class="controls"><button id="prev" type="button" aria-label="Previous slide">←</button><button id="next" type="button" aria-label="Next slide">→</button></div>
+<script>
+const slides=[...document.querySelectorAll(".slide")];let current=0;
+function show(i){current=Math.max(0,Math.min(slides.length-1,i));slides.forEach((s,n)=>s.classList.toggle("active",n===current));}
+document.getElementById("prev").addEventListener("click",()=>show(current-1));
+document.getElementById("next").addEventListener("click",()=>show(current+1));
+document.addEventListener("keydown",e=>{if(e.key==="ArrowRight"||e.key==="PageDown")show(current+1);if(e.key==="ArrowLeft"||e.key==="PageUp")show(current-1);});
+</script>
+</body>
+</html>

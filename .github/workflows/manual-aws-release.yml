@@ -1,0 +1,158 @@
+name: Manual AWS image publish and deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_deploy:
+        description: Select DEPLOY to publish the image and roll it out to the demo cluster
+        type: choice
+        required: true
+        default: SKIP
+        options:
+          - SKIP
+          - DEPLOY
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: student-task-manager-aws-demo
+  cancel-in-progress: false
+
+jobs:
+  publish-and-deploy:
+    if: github.event.inputs.confirm_deploy == 'DEPLOY'
+    runs-on: ubuntu-latest
+    environment: aws-demo
+    env:
+      AWS_REGION: ap-southeast-2
+      AWS_ACCOUNT_ID: "957123506131"
+      ECR_REPOSITORY: student-task-manager
+      INSTANCE_ID: ${{ vars.AWS_DEPLOY_INSTANCE_ID }}
+      ROLE_TO_ASSUME: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check manual deployment configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$ROLE_TO_ASSUME" || { echo "Set repository variable AWS_DEPLOY_ROLE_ARN first."; exit 1; }
+          test -n "$INSTANCE_ID" || { echo "Set repository variable AWS_DEPLOY_INSTANCE_ID first."; exit 1; }
+
+      - name: Configure AWS credentials with GitHub OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ap-southeast-2
+          role-session-name: student-task-manager-github-actions
+
+      - name: Verify target AWS account and ECR repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_account="$(aws sts get-caller-identity --query Account --output text)"
+          test "$actual_account" = "$AWS_ACCOUNT_ID" || {
+            echo "Refusing to deploy: authenticated account does not match the configured account."
+            exit 1
+          }
+          aws ecr describe-repositories \
+            --repository-names "$ECR_REPOSITORY" \
+            --region "$AWS_REGION" >/dev/null
+
+      - name: Log in to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and publish immutable commit image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com/student-task-manager:${{ github.sha }}
+
+      - name: Update the K3s Deployment through Systems Manager
+        shell: bash
+        env:
+          IMAGE_URI: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com/student-task-manager:${{ github.sha }}
+        run: |
+          set -euo pipefail
+          registry="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          remote_script="$(cat <<REMOTE
+          set -euo pipefail
+          export AWS_REGION='${AWS_REGION}'
+          export ECR_REGISTRY='${registry}'
+          export IMAGE_URI='${IMAGE_URI}'
+          python3 - <<'PY'
+          import base64
+          import json
+          import os
+          import subprocess
+          import tempfile
+
+          registry = os.environ["ECR_REGISTRY"]
+          region = os.environ["AWS_REGION"]
+          token = subprocess.check_output(
+              ["aws", "ecr", "get-login-password", "--region", region], text=True
+          ).strip()
+          config = {
+              "auths": {
+                  registry: {
+                      "username": "AWS",
+                      "password": token,
+                      "auth": base64.b64encode(f"AWS:{token}".encode()).decode(),
+                  }
+              }
+          }
+          with tempfile.NamedTemporaryFile(mode="w", prefix="ecr-auth-", delete=False) as f:
+              os.chmod(f.name, 0o600)
+              json.dump(config, f)
+              secret_path = f.name
+          try:
+              manifest = subprocess.check_output([
+                  "k3s", "kubectl", "-n", "student-task-manager", "create", "secret", "generic",
+                  "ecr-pull", f"--from-file=.dockerconfigjson={secret_path}",
+                  "--type=kubernetes.io/dockerconfigjson", "--dry-run=client", "-o", "yaml",
+              ], text=True)
+              subprocess.run(
+                  ["k3s", "kubectl", "apply", "-f", "-"],
+                  input=manifest, text=True, check=True
+              )
+          finally:
+              os.unlink(secret_path)
+          PY
+          k3s kubectl -n student-task-manager set image deployment/task-manager-api api="$IMAGE_URI"
+          k3s kubectl -n student-task-manager rollout status deployment/task-manager-api --timeout=180s
+          REMOTE
+          )"
+          parameters="$(python3 -c 'import json,sys; print(json.dumps({"commands":[sys.stdin.read()]}))' <<< "$remote_script")"
+          command_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --parameters "$parameters" \
+            --comment "Manual Student Task Manager release ${{ github.sha }}" \
+            --query 'Command.CommandId' --output text)"
+          echo "Systems Manager command: $command_id"
+          for attempt in $(seq 1 90); do
+            status="$(aws ssm describe-command-invocations \
+              --command-id "$command_id" \
+              --instance-id "$INSTANCE_ID" \
+              --query 'CommandInvocations[0].Status' --output text)"
+            case "$status" in
+              Success)
+                echo "Deployment rollout completed."
+                exit 0
+                ;;
+              Failed|TimedOut|Cancelled|Cancelling)
+                aws ssm get-command-invocation \
+                  --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+                  --query 'StandardErrorContent' --output text || true
+                exit 1
+                ;;
+            esac
+            sleep 5
+          done
+          echo "Timed out waiting for the Systems Manager command."
+          exit 1

@@ -99,7 +99,7 @@ Spring Boot process CPU:            0.0293 (about 2.9% of one core)
 
 Prometheus scrapes every 15 seconds, retains up to six hours/256 MB in `emptyDir`, and does not persist history across pod replacement. Grafana's database is also temporary; the dashboard and datasource are provisioned from the Kubernetes manifests. The Grafana viewer is accessible only through the private ClusterIP and an authorized SSM session.
 
-The dashboard itself is live and its datasource and panel configuration were verified. A PNG screenshot was not captured: Grafana's render endpoint reports that the Grafana Image Renderer plugin is not installed, and this session has no interactive display capture. The screenshot attempt was discarded rather than included as misleading evidence.
+The dashboard itself is live and its datasource and panel configuration were verified. The monitoring-summary.svg graphic reconstructs selected recorded Prometheus values for presentation; it is explicitly not a Grafana screenshot. A PNG screenshot was not captured: Grafana's render endpoint reports that the Grafana Image Renderer plugin is not installed, and this session has no interactive display capture. The screenshot attempt was discarded rather than included as misleading evidence.
 
 During initial startup, Grafana `13.2.4` exceeded its 192 MiB memory limit and was OOM-killed before becoming ready. It was replaced with `12.4.13` and a 384 MiB limit; the final pod reached `1/1 Running` with zero restarts and about 140 MiB observed memory. No application pod or task data was changed by this troubleshooting.
 

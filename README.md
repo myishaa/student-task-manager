@@ -1,6 +1,6 @@
 # Student Task Manager
 
-A stateless Spring Boot REST API for student tasks, backed by MySQL. The AWS demo runs on a single EC2 host with K3s and a private RDS database. Prometheus and Grafana monitor API and Kubernetes metrics inside the cluster. The repository's GitHub Actions workflow validates Terraform and tests/packages the application; automated AWS image publishing/deployment is not configured yet.
+A stateless Spring Boot REST API for student tasks, backed by MySQL. The AWS demo runs on a single EC2 host with K3s and a private RDS database. Prometheus and Grafana monitor API and Kubernetes metrics inside the cluster. The repository's GitHub Actions workflow validates Terraform and tests/packages the application. A separate manual AWS image-publish/deploy workflow is prepared but needs a scoped GitHub OIDC role and repository setup before use.
 
 ## Run locally
 
@@ -70,6 +70,8 @@ BASE_URL=http://YOUR_DEMO_HOST:30080 MAX_VUS=5 k6 run load-tests/tasks.js
 The run ramps up for 30 seconds, holds the configured user count for one minute, and ramps down for 30 seconds. It fails its thresholds if more than 1% of requests fail or p95 latency reaches 500 ms. Run load tests only against an environment you control, start with a low `MAX_VUS`, and do not treat a passing local result as proof that AWS autoscaling works; verify the HPA and available node capacity separately.
 
 For the AWS presentation, see [`DEMO_RUNBOOK.md`](DEMO_RUNBOOK.md) for the SSM sessions, HPA observation steps, pod recovery demonstration, and a bounded read-only workload in [`load-tests/autoscaling.js`](load-tests/autoscaling.js). Recorded live results and UI screenshots are in [`evidence/DEMO_EVIDENCE.md`](evidence/DEMO_EVIDENCE.md). The implementation report is in [`FINAL_REPORT.md`](FINAL_REPORT.md).
+
+For project submission, see [FINAL_REPORT.md](FINAL_REPORT.md), [COST_ANALYSIS.md](COST_ANALYSIS.md), [PRESENTATION_SLIDES.html](PRESENTATION_SLIDES.html), and [PRESENTATION_NOTES.md](PRESENTATION_NOTES.md). The manual AWS release setup is documented in [AWS_CICD_SETUP.md](AWS_CICD_SETUP.md).
 
 ## Design notes
 
