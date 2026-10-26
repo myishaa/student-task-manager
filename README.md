@@ -10,7 +10,9 @@ Requirements: Docker with Compose.
 docker compose up --build
 ```
 
-Open the student task manager at <http://localhost:8080>. The dashboard lets you add, edit, complete, filter, and delete tasks. The REST API is also available at <http://localhost:8080/api/tasks>. Stop the app with `Ctrl+C`; run `docker compose down` to stop and remove the containers. The named MySQL volume keeps local task data between restarts. Remove it with `docker compose down -v` when you want a clean database.
+Open the student task manager at <http://localhost:8080>. The dashboard lets you add, edit, complete, filter, and delete tasks. The browser-only presentation console is at <http://localhost:8080/demo.html>; outside Kubernetes it shows the application and recorded evidence while marking live Prometheus data unavailable. The REST API is also available at <http://localhost:8080/api/tasks>. Stop the app with `Ctrl+C`; run `docker compose down` to stop and remove the containers. The named MySQL volume keeps local task data between restarts. Remove it with `docker compose down -v` when you want a clean database.
+
+On the AWS deployment, `/demo.html` reads the private Prometheus service and presents the task application, live Deployment/pod/HPA state, monitoring values, a bounded read-only browser load generator, and recorded recovery evidence on one page. Public NodePort access should be restricted to the current demo network's `/32` address; update the security-group source if the presentation moves to another network.
 
 The default database password is only for local development. Set `DB_PASSWORD` and `MYSQL_ROOT_PASSWORD` in your shell or a local `.env` file for local overrides. Never commit real credentials.
 
@@ -28,6 +30,7 @@ The browser dashboard is served by Spring Boot from `src/main/resources/static/i
 | `DELETE` | `/api/tasks/{id}` | Delete a task |
 | `GET` | `/actuator/health` | Liveness/readiness health |
 | `GET` | `/actuator/prometheus` | Prometheus metrics |
+| `GET` | `/api/demo/status` | Read-only presentation metrics from the private Prometheus service |
 
 Task fields: `title` (required, up to 160 characters), `description` (optional, up to 2,000 characters), `dueDate` (optional ISO date), `priority` (`LOW`, `MEDIUM`, or `HIGH`), and `status` (`TODO`, `IN_PROGRESS`, or `DONE`).
 
@@ -49,7 +52,7 @@ mvn spring-boot:run
 
 ## Kubernetes
 
-The manifests define a one-replica baseline API Deployment, NodePort Service, health probes, resource requests, and a CPU-based Horizontal Pod Autoscaler configured for one to two replicas. The private Prometheus/Grafana setup and six-panel dashboard are in [`k8s/monitoring/`](k8s/monitoring/); use the SSM port-forward steps in [`DEMO_RUNBOOK.md`](DEMO_RUNBOOK.md) to view Grafana without exposing it publicly. Prometheus keeps six hours of metrics in temporary pod storage. See [`k8s/README.md`](k8s/README.md) for the ECR/RDS configuration steps. The app manifests require a provisioned cluster, RDS database, and ECR image first.
+The manifests define a one-replica baseline API Deployment, NodePort Service, health probes, resource requests, and a CPU-based Horizontal Pod Autoscaler configured for one to two replicas. The Demo Console reads deployment, pod, HPA and application metrics from the private Prometheus service without receiving Kubernetes write permissions. The private Prometheus/Grafana setup and six-panel dashboard are in [`k8s/monitoring/`](k8s/monitoring/); use the SSM port-forward steps in [`DEMO_RUNBOOK.md`](DEMO_RUNBOOK.md) to view Grafana without exposing it publicly. Prometheus keeps six hours of metrics in temporary pod storage. See [`k8s/README.md`](k8s/README.md) for the ECR/RDS configuration steps. The app manifests require a provisioned cluster, RDS database, and ECR image first.
 
 Terraform for the demo VPC, K3s EC2 host, private RDS database, ECR repository, and access rules is in [`infra/README.md`](infra/README.md). Review current regional pricing and the plan before applying it; AWS resources incur charges.
 

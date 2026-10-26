@@ -2,6 +2,21 @@
 
 This runbook separates what the deployed demo can show from what must be observed during the presentation. The current AWS demo is intentionally small: one EC2 host running K3s, a private RDS MySQL database, one baseline API pod, and an HPA capped at two pods.
 
+The application now includes a browser-based Demo Console at `/demo.html`. Once the updated image is deployed and the application NodePort is reachable, it combines the task app, live Prometheus/Kubernetes status, a bounded browser load generator, and recorded recovery evidence on one page. The terminal sequence below remains the operator fallback and is still useful when verifying a deployment before presenting.
+
+## Recommended browser-only demo
+
+The current AWS demo URL is <http://32.236.242.165:30080/demo.html>. Its EC2 security-group rule allows port 30080 only from the demo network's current public IP. No SSM, kubectl, k6 or Grafana terminal is needed while presenting from that network.
+
+1. Open the Demo Console and confirm the top-right badge says **Live AWS deployment**.
+2. Explain the request path in section 1: browser → Kubernetes Service → Spring Boot pod → private RDS MySQL.
+3. In section 2, show the live readiness, ready pods, HPA replica range and terminal-style Kubernetes output. The page refreshes these values every five seconds through the private Prometheus service.
+4. In section 3, press **Start 90-second load**. The browser sends only `GET /api/tasks` requests. Watch request rate and HPA replicas on the same page. Do not claim a new scale-up unless the live replica count changes; the recorded 1→2→1 run remains visible in section 5.
+5. In section 4, create a task, mark it complete and refresh the embedded app. Explain that persistence after refresh demonstrates the RDS data path.
+6. Finish with the recorded pod replacement and liveness-restart evidence, then state the single-node limitation shown at the bottom of the page.
+
+If the browser URL stops opening after changing Wi-Fi networks, edit the EC2 `student-task-manager-app` security group's existing TCP 30080 rule and set its source to **My IP** from the presentation network. The EC2 public address can also change if the instance is replaced. Keep RDS and Grafana private.
+
 ## Verified live result
 
 On 2026-10-25, a 30-VU read-only k6 run against the Sydney deployment completed 5,699 requests with 0% failed requests and 404 ms p95 latency. The HPA observed CPU above its 60% target (up to 319%), scaled from one to two replicas, and returned to one replica after the configured scale-down stabilization period. Both pods were Ready at peak, and the final deployment returned to 1/1 Ready. Prometheus and Grafana are deployed in the cluster; the API, kube-state-metrics, and Prometheus scrape targets report healthy. This is measured evidence for pod autoscaling and recovery on the single EC2 node; it does not demonstrate EC2 host failover.

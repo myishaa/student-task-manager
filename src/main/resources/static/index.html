@@ -33,6 +33,9 @@
     .brand { display: flex; align-items: center; gap: 12px; font-weight: 750; letter-spacing: -.035em; font-size: 19px; }
     .brand-mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: var(--green); color: white; font-size: 18px; }
     .brand small { display: block; color: var(--muted); letter-spacing: 0; font-size: 11px; font-weight: 550; margin-top: -2px; }
+    .top-actions { display: flex; align-items: center; gap: 15px; }
+    .demo-link { color: var(--green); text-decoration: none; font-size: 12px; font-weight: 720; padding: 7px 10px; border-radius: 8px; background: var(--green-soft); }
+    .demo-link:hover { background: #dcece3; }
     .connection { color: var(--muted); font-size: 12px; display: flex; align-items: center; gap: 8px; }
     .dot { width: 8px; height: 8px; border-radius: 50%; background: #4e9c73; box-shadow: 0 0 0 3px #e9f3ed; }
     main { padding: 44px 0 64px; }
@@ -110,6 +113,7 @@
     @media (max-width: 700px) {
       .topbar { height: 66px; }
       .topbar-inner, main { width: min(100% - 30px, 560px); }
+      .connection { display: none; }
       main { padding-top: 31px; }
       .welcome { align-items: flex-start; flex-direction: column; margin-bottom: 20px; }
       .welcome .primary { width: 100%; }
@@ -135,7 +139,7 @@
     <header class="topbar">
       <div class="topbar-inner">
         <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span><span>studyspace<small>Student task manager</small></span></div>
-        <div class="connection"><span class="dot" aria-hidden="true"></span><span>Connected to your task list</span></div>
+        <div class="top-actions"><a class="demo-link" href="/demo.html">Demo console</a><div class="connection"><span class="dot" aria-hidden="true"></span><span>Connected to your task list</span></div></div>
       </div>
     </header>
     <main>

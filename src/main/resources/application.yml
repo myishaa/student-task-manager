@@ -34,3 +34,6 @@ info:
   app:
     name: Student Task Manager API
     version: 0.1.0
+
+demo:
+  prometheus-url: ${DEMO_PROMETHEUS_URL:http://prometheus.student-task-manager-monitoring.svc.cluster.local:9090}
