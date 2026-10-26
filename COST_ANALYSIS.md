@@ -5,7 +5,7 @@
 **Currency:** USD, before tax and credits  
 **Basis:** on-demand public list-price estimate, using 730 hours per month
 
-This is a model of the Terraform configuration, not a readout of the AWS bill. The AWS CLI identity check could not complete in this session, so I could not inspect Cost Explorer, actual usage, remaining credits, or account-specific free-plan eligibility. Prices and free-plan benefits can change; confirm the current estimate in the AWS Pricing Calculator before relying on it.
+This is a model of the Terraform configuration, not a readout of the AWS bill. AWS CLI identity is currently verified, but Cost Explorer was not queried; actual usage, remaining credits, and account-specific free-plan eligibility remain unverified. Prices and free-plan benefits can change; confirm the current estimate in the AWS Pricing Calculator before relying on it.
 
 ## Estimated monthly resources
 

@@ -8,10 +8,10 @@ On 2026-10-25, a 30-VU read-only k6 run against the Sydney deployment completed 
 
 ## Before the demo
 
-- Confirm AWS CLI credentials still work for account 957123506131 and region ap-southeast-2. The last local AWS identity check could not complete; refresh sign-in before the demo if needed.
+- Confirm AWS CLI credentials still work for account 957123506131 and region ap-southeast-2 with `AWS_PROFILE=default aws sts get-caller-identity`. If the session expired, sign in again before the demo.
 - Install k6 on the Mac if it is not already available: brew install k6.
 - The ECR pull secret expires after 12 hours. Refresh it using the command in k8s/README.md before a deployment or image pull.
-- Prepare three Terminal windows: app port-forward, EC2 Kubernetes shell, and k6. No Grafana tunnel is used for this presentation.
+- Prepare four Terminal windows: app port-forward, EC2 Kubernetes shell, k6, and a private Grafana SSM tunnel.
 
 In Terminal 1, start the app port-forward and leave it running:
 
@@ -31,9 +31,35 @@ PATH="/private/tmp/ssm-plugin-install/sessionmanager-bundle/bin:$PATH" AWS_PROFI
   --region ap-southeast-2
 ~~~
 
-Kubernetes commands below belong in Terminal 2, where the prompt is sh-5.2$. Do not run them at the Mac prompt. In Terminal 3, run k6 from the project folder only after the tunnel is responding.
+Kubernetes commands below belong in Terminal 2, where the prompt is sh-5.2$. Do not run them at the Mac prompt. In Terminal 3, run k6 from the project folder only after the app tunnel is responding.
 
-Open http://localhost:30080 for the app. For the monitoring portion, open evidence/monitoring-summary.svg or the evidence record. It is a static summary of recorded Prometheus values, not a live Grafana screenshot.
+In Terminal 2, get the current Grafana ClusterIP:
+
+~~~sh
+sudo k3s kubectl get service grafana -n student-task-manager-monitoring -o wide
+~~~
+
+In Terminal 4, start a private SSM port-forward to that ClusterIP. Replace GRAFANA_CLUSTER_IP with the value shown in Terminal 2, then leave the session running:
+
+~~~sh
+PATH="/private/tmp/ssm-plugin-install/sessionmanager-bundle/bin:$PATH" AWS_PROFILE=default aws ssm start-session \
+  --target i-0cd822e9d1ba2d0dc \
+  --document-name AWS-StartPortForwardingSessionToRemoteHost \
+  --parameters '{"host":["GRAFANA_CLUSTER_IP"],"portNumber":["3000"],"localPortNumber":["3000"]}' \
+  --region ap-southeast-2
+~~~
+
+Open <http://localhost:30080> for the app and <http://localhost:3000/d/student-task-manager-ops/student-task-manager-operations> for the live Grafana dashboard. Grafana is ClusterIP-only; this SSM tunnel does not expose it publicly. Anonymous access is configured as Viewer for this demo. If the Grafana Service is recreated, query its new ClusterIP in Terminal 2 and update the tunnel command.
+
+### If Grafana does not open
+
+The Grafana SSM tunnel ends when its Terminal 4 session closes or expires. Check it from another Mac terminal:
+
+~~~sh
+curl --fail --silent --show-error http://localhost:3000/api/health
+~~~
+
+A working tunnel returns JSON with `"database": "ok"`. If the connection is refused or times out, keep Terminal 2 connected, query the Grafana Service ClusterIP again, and restart the Terminal 4 port-forward above with that address. Confirm the Grafana pod is `1/1 Running` with `sudo k3s kubectl get pods -n student-task-manager-monitoring`. If the health endpoint works but the dashboard page does not, open the full dashboard URL shown above.
 
 ## Demo sequence
 
@@ -49,7 +75,7 @@ Open http://localhost:30080 for the app. For the monitoring portion, open eviden
 
    Explain that Terraform defines the AWS infrastructure, Docker packages the API, K3s runs it, and the HPA watches CPU. The current HPA is configured for 1–2 API pods with a 60% CPU target.
 
-3. **Show saved monitoring evidence:** open evidence/monitoring-summary.svg. Explain that its values are reconstructed from the Prometheus query results recorded on 25 October 2026; it is not a Grafana screenshot or a live view. Grafana and Prometheus were deployed and checked, but the live Grafana walkthrough is excluded from this presentation.
+3. **Show live monitoring:** open <http://localhost:3000/d/student-task-manager-ops/student-task-manager-operations>. Point out request rate, server errors, average request duration, ready/desired replicas, JVM heap, and Spring Boot CPU. It refreshes every 15 seconds from Prometheus. The saved evidence/monitoring-summary.svg is an offline backup if the AWS tunnel fails.
 
 4. **Show actual autoscaling:** in Terminal 2 start watching:
 
@@ -90,7 +116,7 @@ Open http://localhost:30080 for the app. For the monitoring portion, open eviden
 
 - This demo shows pod-level scaling and recovery on a single EC2 host. It does not recover automatically from EC2 host failure.
 - HPA configuration is not evidence of autoscaling by itself. Save the before/during/after HPA and pod output from a run where a second replica actually appears.
-- Prometheus keeps six hours of metrics in temporary pod storage. Its time series are lost if the pod is recreated; this demo does not use persistent monitoring storage. The static monitoring graphic is a saved summary, not a live Grafana view.
+- Prometheus keeps six hours of metrics in temporary pod storage. Its time series are lost if the pod is recreated; this demo does not use persistent monitoring storage. The static monitoring graphic is an offline backup; the live dashboard is reached through the private SSM port-forward described above.
 - GitHub Actions CI validates and packages the project. A manual AWS release workflow is prepared, but it needs a scoped GitHub OIDC role and repository environment/variables before it can run; it is not triggered by pushes.
 - One API pod is configured at baseline to fit the small demo host. The current HPA maximum is two replicas, which is lower than the original plan's 2–4 target.
 - AWS resources continue running and consuming credits after the terminal sessions close.

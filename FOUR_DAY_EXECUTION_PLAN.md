@@ -14,7 +14,7 @@ The deployed prototype has evidence for the core pod-level scaling and recovery 
 
 - **Verified:** deployed task UI/API with RDS-backed tasks; Docker image in ECR; Terraform-managed AWS/K3s environment; GitHub Actions CI validation; HPA scale-up from one to two pods and scale-down to one under a 30-VU k6 run; Deployment replacement after pod deletion; liveness-probe-triggered container restart.
 - **Scope adjustments:** the planned student-records API became a Student Task Manager UI/API. The cost-constrained deployment uses one EC2 node and an HPA range of one to two replicas, below the original two-to-four target.
-- **Implemented after the original four-day window:** private Prometheus/Grafana monitoring with a six-panel API and Kubernetes dashboard. A static monitoring graphic was prepared for the presentation; the live Grafana walkthrough is intentionally excluded. A manual GitHub Actions image-publish/deploy workflow and setup instructions are prepared, but AWS OIDC/IAM and GitHub environment configuration remain account-side steps. The single EC2 host does not recover from host failure.
+- **Implemented after the original four-day window:** private Prometheus/Grafana monitoring with a six-panel API and Kubernetes dashboard. A static monitoring graphic was prepared as a backup; the current presentation includes the live Grafana walkthrough through a private SSM tunnel. A manual GitHub Actions image-publish/deploy workflow and setup instructions are prepared, but AWS OIDC/IAM and GitHub environment configuration remain account-side steps. The single EC2 host does not recover from host failure.
 
 ## 1. Scope and architecture
 
@@ -204,7 +204,7 @@ Keep the controlled liveness failure demonstration in the recorded evidence if t
 - **Prepared:** repository, application, Dockerfile, Terraform, Kubernetes manifests, CI validation, k6 scripts, report, cost estimate, static evidence summary, browser presentation slides, and demo runbook.
 - **Prepared but not activated:** manual AWS image-publish/deploy workflow. It needs a scoped IAM OIDC role, GitHub aws-demo environment, and repository variables; see AWS_CICD_SETUP.md.
 - **Not captured:** backup demo video. Use PRESENTATION_SLIDES.html and PRESENTATION_NOTES.md for the live presentation; if a recording is required, capture the demo from the machine with active AWS access.
-- **Updated:** student registration numbers are now included in the report and presentation. The live Grafana walkthrough remains excluded.
+- **Updated:** student registration numbers are included in the report and presentation. The live Grafana walkthrough is included through a private SSM tunnel; the static summary is the backup.
 - **External account actions still needed:** configure the GitHub OIDC role/environment if the team wants to use the prepared release workflow. No AWS release or infrastructure operation was run while preparing these artifacts.
 
 - GitHub repository containing the application, Dockerfile, Terraform, Kubernetes manifests, GitHub Actions workflow, and k6 scripts.
