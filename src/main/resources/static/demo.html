@@ -91,6 +91,8 @@
     .button-row { display: flex; gap: 9px; }
     .button { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; border: 1px solid var(--line); padding: 0 15px; background: transparent; color: var(--ink); font-weight: 700; }
     .button.primary { border-color: var(--mint); background: var(--mint); color: var(--navy); }
+    .grafana-link { margin-top: 17px; color: var(--navy); background: var(--mint); border-color: var(--mint); text-decoration: none; }
+    .grafana-link:hover { background: #8be9d2; }
     .button:disabled { opacity: .45; cursor: default; }
     .load-message { min-height: 42px; color: var(--muted); font-size: 11px; margin-top: 15px; }
     .app-frame-card { padding: 0; overflow: hidden; background: #f6f7f4; box-shadow: var(--shadow); }
@@ -196,6 +198,7 @@ Connecting to live cluster metrics…</pre>
           <p class="card-sub">Recent samples collected by this page from Prometheus.</p>
           <div class="chart" id="chart"><div class="chart-empty">Waiting for live monitoring samples…</div></div>
           <div class="legend"><span>Requests / second</span><span>HPA replicas</span></div>
+          <a class="button grafana-link" href="http://32.236.242.165:30300/d/student-task-manager-ops/student-task-manager-operations" target="_blank" rel="noopener">Open full Grafana dashboard ↗</a>
         </article>
         <article class="load-card">
           <h3>Browser load generator</h3>

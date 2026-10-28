@@ -115,11 +115,12 @@ metadata:
   labels:
     app.kubernetes.io/name: grafana
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app.kubernetes.io/name: grafana
   ports:
     - name: http
       port: 3000
       targetPort: http
+      nodePort: 30300
       protocol: TCP
