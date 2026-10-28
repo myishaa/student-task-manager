@@ -578,7 +578,7 @@ See [`evidence/DEMO_EVIDENCE.md`](evidence/DEMO_EVIDENCE.md) for the complete re
 4. Use Systems Manager Run Command to refresh the ECR pull secret.
 5. Update the K3s Deployment and wait for rollout completion.
 
-The workflow never runs on an ordinary push. It requires the operator to select `DEPLOY`. See [`AWS_CICD_SETUP.md`](AWS_CICD_SETUP.md) for configuration and status.
+The workflow never runs on an ordinary push. It requires the operator to select `DEPLOY` and depends on an externally configured GitHub OIDC role and repository variables.
 
 ## Live demonstration sequence
 
@@ -789,8 +789,6 @@ Only after reviewing the exact targets should an authorized operator run `terraf
 | [`evidence/task-created.png`](evidence/task-created.png) | Task creation evidence |
 | [`evidence/task-completed.png`](evidence/task-completed.png) | Task completion evidence |
 | [`COST_ANALYSIS.md`](COST_ANALYSIS.md) | Cost assumptions and calculations |
-| [`FOUR_DAY_EXECUTION_PLAN.md`](FOUR_DAY_EXECUTION_PLAN.md) | Original four-day implementation plan |
-| [`AWS_CICD_SETUP.md`](AWS_CICD_SETUP.md) | Manual AWS release workflow setup |
 | [`infra/README.md`](infra/README.md) | Terraform and AWS operations guide |
 | [`k8s/README.md`](k8s/README.md) | Kubernetes deployment guide |
 
